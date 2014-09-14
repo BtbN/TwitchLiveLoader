@@ -75,6 +75,7 @@ void TwitchHandler::tokenReply(QNetworkReply *reply)
 	if(reply->error() != QNetworkReply::NoError)
 	{
 		qDebug() << "token get error!";
+		QTimer::singleShot(2000, this, SLOT(reauth()));
 		return;
 	}
 
@@ -96,6 +97,7 @@ void TwitchHandler::tokenReply(QNetworkReply *reply)
 	if(code != 200)
 	{
 		qDebug() << "Get token failed: Error" << code;
+		QTimer::singleShot(2000, this, SLOT(reauth()));
 		return;
 	}
 
@@ -107,6 +109,7 @@ void TwitchHandler::tokenReply(QNetworkReply *reply)
 	if(err.error != QJsonParseError::NoError)
 	{
 		qDebug() << "Json parsing failed:" << err.errorString();
+		QTimer::singleShot(2000, this, SLOT(reauth()));
 		return;
 	}
 
@@ -149,6 +152,7 @@ void TwitchHandler::usherReply(QNetworkReply *reply)
 	if(reply->error() != QNetworkReply::NoError)
 	{
 		qDebug() << "usher get error!";
+		QTimer::singleShot(2000, this, SLOT(reauth()));
 		return;
 	}
 
@@ -170,6 +174,7 @@ void TwitchHandler::usherReply(QNetworkReply *reply)
 	if(code != 200)
 	{
 		qDebug() << "Get usher failed: Error" << code;
+		QTimer::singleShot(2000, this, SLOT(reauth()));
 		return;
 	}
 
