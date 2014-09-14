@@ -41,7 +41,6 @@ class TwitchHandler : public QObject
 	bool haveM3u;
 
 	QNetworkAccessManager *nam;
-	QNetworkAccessManager *nam_direct;
 	QTimer *m3uLoadTimer;
 
 	QSet<QString> currentParts;

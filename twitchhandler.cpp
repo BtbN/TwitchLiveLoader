@@ -31,7 +31,6 @@ TwitchHandler::TwitchHandler(const QString &stream, const QString &dest, const Q
 	,recentlyLoaded(this)
 {
 	nam = new QNetworkAccessManager(this);
-	nam_direct = new QNetworkAccessManager(this);
 
 	nam->setProxy(proxy);
 
@@ -41,7 +40,6 @@ TwitchHandler::TwitchHandler(const QString &stream, const QString &dest, const Q
 	};
 
 	connect(nam, &QNetworkAccessManager::finished, del);
-	connect(nam_direct, &QNetworkAccessManager::finished, del);
 
 	reauth();
 
@@ -312,7 +310,7 @@ void TwitchHandler::downloadPart(const QString &name)
 	QNetworkRequest req;
 	req.setUrl(url);
 
-	QNetworkReply *reply = nam_direct->get(req);
+	QNetworkReply *reply = nam->get(req);
 
 	connect(reply, &QNetworkReply::finished, this, [this, name, targetFile, reply]
 	{
@@ -340,7 +338,7 @@ void TwitchHandler::savePart(const QString &name, const QString &path, QNetworkR
 		qDebug() << "save redirected to" << reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
 
 		QNetworkRequest req(reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toString());
-		QNetworkReply *reply = nam_direct->get(req);
+		QNetworkReply *reply = nam->get(req);
 		connect(reply, &QNetworkReply::finished, this, [this, name, path, reply]()
 		{
 			savePart(name, path, reply);
