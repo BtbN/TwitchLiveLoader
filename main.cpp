@@ -6,7 +6,10 @@ int main(int argc, char *argv[])
 {
 	QCoreApplication app(argc, argv);
 
-	TwitchHandler hndl("cirno_tv", "outdir");
+	QNetworkProxy httpProx(QNetworkProxy::HttpProxy, "192.168.115.1", 8118);
+
+	new TwitchHandler("misskaddykins", "outdir_direct");
+	new TwitchHandler("misskaddykins", "outdir_proxy", httpProx);
 
 	return app.exec();
 }
