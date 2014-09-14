@@ -17,7 +17,9 @@ find_package(Qt5Network REQUIRED)
 add_executable(twliveload
 	main.cpp
 	twitchhandler.cpp
-	twitchhandler.h)
+	twitchhandler.h
+	timedset.cpp
+	timedset.h)
 target_link_libraries(twliveload
 	Qt5::Core
 	Qt5::Network)

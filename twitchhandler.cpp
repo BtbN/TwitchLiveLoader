@@ -13,6 +13,7 @@
 #include <QStringList>
 #include <QFileInfo>
 #include <QUrlQuery>
+#include <QDateTime>
 #include <QTimer>
 #include <QFile>
 #include <QUrl>
@@ -27,6 +28,7 @@ TwitchHandler::TwitchHandler(const QString &stream, const QString &dest, const Q
 	,dest(dest)
 	,haveToken(false)
 	,haveM3u(false)
+	,recentlyLoaded(this)
 {
 	nam = new QNetworkAccessManager(this);
 	nam_direct = new QNetworkAccessManager(this);
@@ -42,6 +44,8 @@ TwitchHandler::TwitchHandler(const QString &stream, const QString &dest, const Q
 	connect(nam_direct, &QNetworkAccessManager::finished, del);
 
 	reauth();
+
+	recentlyLoaded.setTimeout(120000);
 
 	QTimer *reauthTimer = new QTimer(this);
 	reauthTimer->setInterval(5 * 60 * 1000);
@@ -186,7 +190,8 @@ void TwitchHandler::usherReply(QNetworkReply *reply)
 
 	if(m3u8.trimmed() == "[]")
 	{
-		qDebug() << "m3u8 is empty!";
+		qDebug() << "m3u8 is empty, channel likely not live, retrying in 10 seconds";
+		QTimer::singleShot(10000, this, SLOT(reauth()));
 		return;
 	}
 
@@ -202,6 +207,9 @@ void TwitchHandler::usherReply(QNetworkReply *reply)
 			return;
 		}
 	}
+
+	qDebug() << "no channel found in m3u8, retrying in 10 seconds";
+	QTimer::singleShot(10000, this, SLOT(reauth()));
 }
 
 void TwitchHandler::newPlaylist(const QString &url)
@@ -292,13 +300,9 @@ void TwitchHandler::downloadPart(const QString &name)
 		return;
 	}
 
-	QFileInfo finfo(dir, name);
-	if(finfo.exists())
-	{
-		return;
-	}
+	QFileInfo finfo(dir, QString("%1-%2").arg(QDateTime::currentDateTimeUtc().toTime_t()).arg(name));
 
-	if(currentParts.contains(name))
+	if(currentParts.contains(name) || recentlyLoaded.contains(name))
 	{
 		return;
 	}
@@ -313,13 +317,13 @@ void TwitchHandler::downloadPart(const QString &name)
 	connect(reply, &QNetworkReply::finished, this, [this, name, targetFile, reply]
 	{
 		currentParts.remove(name);
-		savePart(targetFile, reply);
+		savePart(name, targetFile, reply);
 	});
 
-	currentParts[name] = true;
+	currentParts.insert(name);
 }
 
-void TwitchHandler::savePart(const QString &path, QNetworkReply *reply)
+void TwitchHandler::savePart(const QString &name, const QString &path, QNetworkReply *reply)
 {
 	if(reply->error() != QNetworkReply::NoError)
 	{
@@ -335,9 +339,9 @@ void TwitchHandler::savePart(const QString &path, QNetworkReply *reply)
 
 		QNetworkRequest req(reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toString());
 		QNetworkReply *reply = nam_direct->get(req);
-		connect(reply, &QNetworkReply::finished, this, [this, path, reply]()
+		connect(reply, &QNetworkReply::finished, this, [this, name, path, reply]()
 		{
-			savePart(path, reply);
+			savePart(name, path, reply);
 		});
 		return;
 	}
@@ -356,9 +360,18 @@ void TwitchHandler::savePart(const QString &path, QNetworkReply *reply)
 		return;
 	}
 
-	file.write(reply->readAll());
-
+	QByteArray data = reply->readAll();
+	qint64 written = file.write(data);
 	file.close();
 
-	qDebug() << "Wrote" << path;
+	if(written == data.length())
+	{
+		qDebug() << "Wrote" << path;
+		recentlyLoaded.insert(name);
+	}
+	else
+	{
+		qDebug() << "Error writing full data to file!";
+		file.remove();
+	}
 }

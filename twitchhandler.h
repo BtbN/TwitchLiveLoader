@@ -2,7 +2,10 @@
 
 #include <QNetworkProxy>
 #include <QObject>
-#include <QHash>
+#include <QSet>
+
+#include "timedset.h"
+
 class QNetworkAccessManager;
 class QNetworkReply;
 class QTimer;
@@ -24,7 +27,7 @@ class TwitchHandler : public QObject
 	void updateM3u();
 	void m3uReply(QNetworkReply *reply);
 	void downloadPart(const QString &name);
-	void savePart(const QString &path, QNetworkReply *reply);
+	void savePart(const QString &name, const QString &path, QNetworkReply *reply);
 
 	private:
 	QString stream;
@@ -41,5 +44,6 @@ class TwitchHandler : public QObject
 	QNetworkAccessManager *nam_direct;
 	QTimer *m3uLoadTimer;
 
-	QHash<QString, bool> currentParts;
+	QSet<QString> currentParts;
+	TimedSet<QString> recentlyLoaded;
 };
