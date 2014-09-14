@@ -68,6 +68,8 @@ void TwitchHandler::reauth()
 	{
 		tokenReply(reply);
 	});
+
+	qDebug() << "Reauthing:" << url;
 }
 
 void TwitchHandler::tokenReply(QNetworkReply *reply)
@@ -145,6 +147,8 @@ void TwitchHandler::tokenReply(QNetworkReply *reply)
 	{
 		usherReply(reply);
 	});
+
+	qDebug() << "Requested usher:" << url;
 }
 
 void TwitchHandler::usherReply(QNetworkReply *reply)
@@ -178,8 +182,13 @@ void TwitchHandler::usherReply(QNetworkReply *reply)
 		return;
 	}
 
-	QByteArray data = reply->readAll();
-	QString m3u8 =  QString::fromUtf8(data);
+	QString m3u8 =  QString::fromUtf8(reply->readAll());
+
+	if(m3u8.trimmed() == "[]")
+	{
+		qDebug() << "m3u8 is empty!";
+		return;
+	}
 
 	QStringList lines = m3u8.split('\n');
 
