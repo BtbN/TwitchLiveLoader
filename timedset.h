@@ -51,7 +51,6 @@ class TimedSet
 		QObject::connect(timer.get(), &QTimer::timeout, parent, [this, value]()
 		{
 			remove(value);
-			qDebug() << "Timed out value" << value;
 		});
 
 		timer->start();

@@ -152,7 +152,7 @@ void TwitchHandler::tokenReply(QNetworkReply *reply)
 		usherReply(reply);
 	});
 
-	qDebug() << "Requested usher:" << url;
+	qDebug() << "Requested usher:" << url.toString();
 }
 
 void TwitchHandler::usherReply(QNetworkReply *reply)
@@ -321,6 +321,8 @@ void TwitchHandler::downloadPart(const QString &name)
 	});
 
 	currentParts.insert(name);
+
+	qDebug() << "Downloading" << url.toString() << "to" << targetFile;
 }
 
 void TwitchHandler::savePart(const QString &name, const QString &path, QNetworkReply *reply)
