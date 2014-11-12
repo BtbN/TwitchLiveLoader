@@ -281,6 +281,23 @@ void TwitchHandler::m3uReply(QNetworkReply *reply)
 	}
 }
 
+#define DIR_LIFETIME (5*60*60)
+
+static QDir getCurrentDestDir(const QDir &topDir)
+{
+	QDir res = topDir;
+
+	uint time = QDateTime::currentDateTimeUtc().toTime_t();
+	time /= DIR_LIFETIME;
+
+	QString timeStr = QString("%1").arg(time);
+
+	res.mkdir(timeStr);
+	res.cd(timeStr);
+
+	return res;
+}
+
 void TwitchHandler::downloadPart(const QString &name)
 {
 	QUrl url = m3uUrl;
@@ -297,6 +314,8 @@ void TwitchHandler::downloadPart(const QString &name)
 		qDebug() << "Failed creating destdir" << dest;
 		return;
 	}
+
+	dir = getCurrentDestDir(dir);
 
 	QFileInfo finfo(dir, QString("%1-%2").arg(QDateTime::currentDateTimeUtc().toTime_t()).arg(name));
 
