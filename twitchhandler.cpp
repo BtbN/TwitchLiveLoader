@@ -54,7 +54,12 @@ TwitchHandler::TwitchHandler(const QString &stream, const QString &dest, const Q
 	m3uLoadTimer->setInterval(1000);
 	m3uLoadTimer->setSingleShot(false);
 
+	retryTimer = new QTimer(this);
+	retryTimer->setInterval(10000);
+	retryTimer->setSingleShot(true);
+
 	connect(reauthTimer, &QTimer::timeout, this, &TwitchHandler::reauth);
+	connect(retryTimer, &QTimer::timeout, this, &TwitchHandler::reauth);
 	connect(m3uLoadTimer, &QTimer::timeout, this, &TwitchHandler::updateM3u);
 }
 
@@ -79,7 +84,7 @@ void TwitchHandler::tokenReply(QNetworkReply *reply)
 	if(reply->error() != QNetworkReply::NoError)
 	{
 		qDebug() << "token get error!";
-		QTimer::singleShot(2000, this, SLOT(reauth()));
+		retryTimer->start();
 		return;
 	}
 
@@ -101,7 +106,7 @@ void TwitchHandler::tokenReply(QNetworkReply *reply)
 	if(code != 200)
 	{
 		qDebug() << "Get token failed: Error" << code;
-		QTimer::singleShot(2000, this, SLOT(reauth()));
+		retryTimer->start();
 		return;
 	}
 
@@ -113,7 +118,7 @@ void TwitchHandler::tokenReply(QNetworkReply *reply)
 	if(err.error != QJsonParseError::NoError)
 	{
 		qDebug() << "Json parsing failed:" << err.errorString();
-		QTimer::singleShot(2000, this, SLOT(reauth()));
+		retryTimer->start();
 		return;
 	}
 
@@ -150,6 +155,8 @@ void TwitchHandler::tokenReply(QNetworkReply *reply)
 		usherReply(reply);
 	});
 
+	m3uLoadTimer->stop();
+
 	qDebug() << "Requested usher:" << url.toString();
 }
 
@@ -158,7 +165,7 @@ void TwitchHandler::usherReply(QNetworkReply *reply)
 	if(reply->error() != QNetworkReply::NoError)
 	{
 		qDebug() << "usher get error!";
-		QTimer::singleShot(2000, this, SLOT(reauth()));
+		retryTimer->start();
 		return;
 	}
 
@@ -180,7 +187,7 @@ void TwitchHandler::usherReply(QNetworkReply *reply)
 	if(code != 200)
 	{
 		qDebug() << "Get usher failed: Error" << code;
-		QTimer::singleShot(2000, this, SLOT(reauth()));
+		retryTimer->start();
 		return;
 	}
 
@@ -189,7 +196,7 @@ void TwitchHandler::usherReply(QNetworkReply *reply)
 	if(m3u8.trimmed() == "[]")
 	{
 		qDebug() << "m3u8 is empty, channel likely not live, retrying in 10 seconds";
-		QTimer::singleShot(10000, this, SLOT(reauth()));
+		retryTimer->start();
 		return;
 	}
 
@@ -207,7 +214,7 @@ void TwitchHandler::usherReply(QNetworkReply *reply)
 	}
 
 	qDebug() << "no channel found in m3u8, retrying in 10 seconds";
-	QTimer::singleShot(10000, this, SLOT(reauth()));
+	retryTimer->start();
 }
 
 void TwitchHandler::newPlaylist(const QString &url)

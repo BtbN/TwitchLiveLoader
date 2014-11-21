@@ -42,6 +42,7 @@ class TwitchHandler : public QObject
 
 	QNetworkAccessManager *nam;
 	QTimer *m3uLoadTimer;
+	QTimer *retryTimer;
 
 	QSet<QString> currentParts;
 	TimedSet<QString> recentlyLoaded;
