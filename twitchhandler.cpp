@@ -251,6 +251,8 @@ void TwitchHandler::m3uReply(QNetworkReply *reply)
 	if(reply->error() != QNetworkReply::NoError)
 	{
 		qDebug() << "m3u get error!";
+		m3uLoadTimer->stop();
+		retryTimer->start();
 		return;
 	}
 
@@ -272,6 +274,8 @@ void TwitchHandler::m3uReply(QNetworkReply *reply)
 	if(code != 200)
 	{
 		qDebug() << "Get m3u failed: Error" << code;
+		m3uLoadTimer->stop();
+		retryTimer->start();
 		return;
 	}
 
