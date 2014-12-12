@@ -139,10 +139,12 @@ void TwitchHandler::tokenReply(QNetworkReply *reply)
 
 	QNetworkRequest req;
 
-	QUrl url = QString("http://usher.twitch.tv/select/%1.json").arg(stream);
+	QUrl url = QString("http://usher.twitch.tv/api/channel/hls/%1.m3u8").arg(stream);
 	QUrlQuery qry;
-	qry.addQueryItem("nauthsig", sig);
-	qry.addQueryItem("nauth", token);
+	qry.addQueryItem("player", "twitchweb");
+	qry.addQueryItem("type", "any");
+	qry.addQueryItem("sig", sig);
+	qry.addQueryItem("token", token);
 	qry.addQueryItem("allow_source", "true");
 	url.setQuery(qry);
 
